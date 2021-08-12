@@ -1,24 +1,44 @@
-import React from 'react';
-import logo from './logo.svg';
+import Main from './components/Main';
+import { Widgets } from './types';
 import './App.css';
 
+const widgets: Widgets[] = [
+  {
+    id: 1,
+    text: "ITINERARY",
+  },
+  {
+    id: 2,
+    text: "MENU",
+  },
+  {
+    id: 3,
+    text: "CREW",
+  },
+  {
+    id: 4,
+    text: "INFO",
+  },
+  {
+    id: 5,
+    text: "MESSAGES",
+  }
+]
+
 function App() {
+
+  // console.log(refWidgets)
+
+  // useEffect(() => {
+  //   if (widgets.length) {
+  //     refWidgets.current = refWidgets.current.slice(0, widgets.length);
+  //   }
+  // }, [widgets])
+
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Main widgets={widgets} />
     </div>
   );
 }
