@@ -13,15 +13,15 @@ const STATIC_HEIGHT = 150;
 
 const Main = ({widgets}: IProps) => {
 
-    const [currentDrag, setCurrentDrag] = useState<any | null>(null) 
-    const [dropElements, setDropElements] = useState<any[]>([])
+    const [currentDrag, setCurrentDrag] = useState<HTMLDivElement | null>(null) 
+    const [dropElements, setDropElements] = useState<HTMLDivElement[]>([])
     const [positionX, setPositionX] = useState<number>(500);
     const [positionY, setPositionY] = useState<number>(500);
     const [isPlaceholder, setIsPlaceholder] = useState<boolean>(false);
+    const [isOver, setIsOver] = useState<boolean>(false)
+
     const refWidgets = useRef<any>([])
     const mainContent = useRef<any>()
-    let REAL_WIDTH: number;
-    let REAL_HEIGHT: number;
 
     useEffect(() => {
         if (widgets.length) {
@@ -29,15 +29,16 @@ const Main = ({widgets}: IProps) => {
         }
     }, [widgets])
 
+
     //update X,Y
     const setXY = (e: React.DragEvent<HTMLDivElement>, index: number) => {
         const content = mainContent.current.getBoundingClientRect();
-        
+    
 
-        if (e.clientX > content.left + (getContentSize().width / 3) / 2 && e.clientX < content.right - (getContentSize().width / 3) / 2) {
+        if (e.clientX > Math.floor(content.left + (getContentSize().width / 3) / 2) && e.clientX < Math.floor(content.right - (getContentSize().width / 3) / 2)) {
             setPositionX(e.clientX)
         } 
-        if (e.clientY > content.top + (getContentSize().height / 2) / 2  && e.clientY < content.bottom - (getContentSize().height / 2) / 2) {
+        if (e.clientY > Math.floor(content.top + (getContentSize().height / 2) / 2)  && e.clientY < Math.floor(content.bottom - (getContentSize().height / 2) / 2)) {
             setPositionY(e.clientY)
         }  
     }
@@ -45,10 +46,10 @@ const Main = ({widgets}: IProps) => {
     const chekGhostDiv = () => {
         const content = mainContent.current.getBoundingClientRect();
 
-        if (positionY < content.top +  (getContentSize().height / 2) / 2) return false
-        if (positionY > content.bottom - (getContentSize().height / 2) / 2) return false
-        if (positionX < content.left + (getContentSize().width / 3) / 2) return false
-        if (positionX > content.right - (getContentSize().width / 3) / 2) return false
+        if (positionY < Math.floor(content.top +  (getContentSize().height / 2) / 2)) return false
+        if (positionY > Math.floor(content.bottom - (getContentSize().height / 2) / 2)) return false
+        if (positionX < Math.floor(content.left + (getContentSize().width / 3) / 2)) return false
+        if (positionX > Math.floor(content.right - (getContentSize().width / 3) / 2)) return false
 
 
 
@@ -72,7 +73,7 @@ const Main = ({widgets}: IProps) => {
         const ghost = document.createElement('div');
         ghost.classList.add('ghost__element');
         document.body.appendChild(ghost);
-        e.dataTransfer.setDragImage(ghost, STATIC_WIDTH / 2, STATIC_HEIGHT / 2)
+        e.dataTransfer.setDragImage(ghost, Math.floor(STATIC_WIDTH / 2), Math.floor(STATIC_HEIGHT / 2))
 
     }
 
@@ -91,8 +92,7 @@ const Main = ({widgets}: IProps) => {
     const updateDiv = (x: number, y: number) => {
         const div = document.querySelector('.test') as HTMLDivElement;
 
-        
-
+        checkIsAbove()
         if(!chekGhostDiv()) return
 
         if (div) {
@@ -101,47 +101,92 @@ const Main = ({widgets}: IProps) => {
         }
     }
 
+    console.log(dropElements)
+
+    const checkIsAbove = () => {
+        const div = document.querySelector('.placeholder') as HTMLDivElement;
+        const dropped = Array.from(document.querySelectorAll('.drop__element'))
+
+        if (div && dropped?.length) {
+            const getDimension = div.getBoundingClientRect();
+            const currentX = Math.floor(getDimension.x);
+            const currentY = Math.floor(getDimension.y);
+            const currentWidth = Math.floor(getDimension.width);
+            const currentHeight = Math.floor(getDimension.height);
+
+            // console.log(currentX)
+            // console.log(currentY)
+            // console.log(currentWidth)
+            // console.log(currentHeight)
+
+            for(let i = 0; i < dropped.length; i++) {
+
+       
+                const placedX = Math.floor(dropElements[i].getBoundingClientRect().x)
+                const placedY = Math.floor(dropElements[i].getBoundingClientRect().y)
+                const placedWidth = Math.floor(dropElements[i].getBoundingClientRect().width)
+                const placedHeight = Math.floor(dropElements[i].getBoundingClientRect().height)
+
+                if ((currentX < placedX + placedWidth) &&
+                    (currentX + currentWidth > placedX) &&
+                    (currentY < placedY + placedHeight) &&
+                    (currentY + currentHeight > placedY)) {
+                        console.log('true')
+                       return setIsOver(true)
+                    } else {
+                        console.log(false)
+                       return setIsOver(false)
+                    }
+                
+         
+                
+            }
+
+        }
+    }
+
+    //  console.log('CZy zachodzi ', isOver)
     const dragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault()
 
-
+            const contentX = Math.floor(getContentSize().x)
+            const contentY = Math.floor(getContentSize().y)
     
-            const contentX = getContentSize().x
-            const contentY = getContentSize().y
-    
-            const placeX = positionX - contentX - ((getContentSize().width / 3) / 2);
-            const placeY = positionY - contentY - ((getContentSize().height / 2) / 2);
+            const placeX = Math.floor(positionX - contentX - ((getContentSize().width / 3) / 2));
+            const placeY = Math.floor(positionY - contentY - ((getContentSize().height / 2) / 2));
     
             if (!isPlaceholder) {
                 createDiv(placeX, placeY)
             } else {
                 updateDiv(placeX, placeY)
             }  
-        } 
-    
 
+           
+        } 
+   
     const drop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         const test = document.querySelector('.test') as HTMLDivElement;
         mainContent.current.removeChild(test)
         setIsPlaceholder(false)
        
-        const contentX = getContentSize().x
-        const contentY = getContentSize().y
+        const contentX = Math.floor(getContentSize().x)
+        const contentY = Math.floor(getContentSize().y)
 
-        const left = positionX - contentX - ((getContentSize().width / 3) / 2)
-        const top = positionY - contentY -  ((getContentSize().height / 2) / 2)
+        const left = Math.floor(positionX - contentX - ((getContentSize().width / 3) / 2))
+        const top = Math.floor(positionY - contentY -  ((getContentSize().height / 2) / 2))
 
-        if (mainContent?.current) {
+        if (mainContent?.current && currentDrag) {
             currentDrag.classList.remove(HeaderClass)
             currentDrag.classList.add(DropClass)
             currentDrag.style.top = top + "px"
             currentDrag.style.left = left + "px"
             currentDrag.onmousedown=(e: any) => resize(e);
             mainContent.current.appendChild(currentDrag)
+            setDropElements([...dropElements, currentDrag])
         }
 
-        setDropElements([...dropElements, currentDrag])
+        
         setCurrentDrag(null)
     }
 
@@ -171,6 +216,7 @@ const Main = ({widgets}: IProps) => {
             <div className="main">
                 <div onDragOver={dragOver} onDrop={drop} className="main__content" ref={mainContent}>
                     {/* <div className="placeholder"></div> */}
+                   
                 </div>
             </div>
         </>
