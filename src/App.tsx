@@ -27,17 +27,8 @@ const widgets: Widgets[] = [
 
 function App() {
 
-  // console.log(refWidgets)
-
-  // useEffect(() => {
-  //   if (widgets.length) {
-  //     refWidgets.current = refWidgets.current.slice(0, widgets.length);
-  //   }
-  // }, [widgets])
-
-
   return (
-    <div className="App">
+    <div className="app">
       <Main widgets={widgets} />
     </div>
   );
