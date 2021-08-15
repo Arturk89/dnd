@@ -5,6 +5,21 @@ type IProps = {
     widgets: Widgets[]
 }
 
+type MouseDown = {
+    isDown: boolean,
+    x: number,
+    y: number
+}
+
+type DropElements = {
+    text?: string,
+    className: string,
+    height: number,
+    left: number,
+    top: number,
+    width: number
+}
+
 const DropClass = "drop__element";
 const HeaderClass = "header__item";
 const redOver = "isOver"
@@ -18,8 +33,11 @@ const Main = ({widgets}: IProps) => {
     const [dropElements, setDropElements] = useState<any[]>([])
     const [positionX, setPositionX] = useState<number>(500);
     const [positionY, setPositionY] = useState<number>(500);
+    const [mouseDownXY, setMouseDownXY] = useState<MouseDown>({isDown: false, x: 0, y: 0})
+
     const [isPlaceholder, setIsPlaceholder] = useState<boolean>(false);
     const [isThrottled, setIsThrottled] = useState<boolean>(false)
+    const [isResized, setIsResized] = useState<boolean>(false)
     const [isOver, setIsOver] = useState<any>()
 
 
@@ -180,33 +198,68 @@ const Main = ({widgets}: IProps) => {
 
         const left = Math.floor(positionX - contentX - ((getContentSize().width / 3) / 2))
         const top = Math.floor(positionY - contentY -  ((getContentSize().height / 2) / 2))
+        const width = Math.floor(getContentSize().width / 3)
+        const height = Math.floor(getContentSize().height / 2)
 
         if (mainContent?.current && currentDrag) {
             currentDrag.classList.remove(HeaderClass)
-            // console.log(currentDrag)
-            // currentDrag.classList.add(DropClass)
-            // currentDrag.style.top = top + "px"
-            // currentDrag.style.left = left + "px"
-            // currentDrag.onmousedown=(e: any) => resize(e);
-            // mainContent.current.appendChild(currentDrag)
-            // dropItems.current.push(currentDrag)
-            setDropElements([...dropElements, 
-                {text: currentDrag.textContent,
-                className: DropClass,
-                top: top,
-                left: left,
-                }
-                
-            ])
-            // setDropElements([...dropElements, currentDrag])
+
+                setDropElements([...dropElements, 
+                    {text: currentDrag.textContent,
+                    className: DropClass,
+                    top: top,
+                    left: left,
+                    width: width,
+                    height: height
+                    } as DropElements    
+                ])
+            
+            
         }
 
         
         setCurrentDrag(null)
     }
 
+    const resetMouse = () => {
+        setMouseDownXY({...mouseDownXY, isDown: false})
+    }
+    const getMouseMoveXY = (e: any) => {
+        if(!isResized) {
+            setIsResized(true);
+            if (mouseDownXY.isDown) {
+
+          
+
+                const currentX = e.clientX;
+                const currentY = e.clientY;
+                console.log(e.currentTarget.textContent)
+                const current = dropElements.findIndex((item, index) => item.text === e.currentTarget.textContent);
+ 
+       
+                const prevWidth = dropElements[current].width;
+                const drop = [...dropElements];
+
+
+                    if (currentX > mouseDownXY.x ) {
+                        drop[current].width = prevWidth + 10;
+                        setDropElements([
+                           ...drop
+                        ])
+
+                    } else { 
+                        drop[current].width = prevWidth - 10;
+                        setDropElements([
+                           ...drop
+                        ])
+                    }
+            }
+            setTimeout(() => setIsResized(false), 100)
+        } 
+    }
+
     const resize = (e: any) => {
-        console.log('resize', e.currentTarget);
+        setMouseDownXY({isDown: true, x: e.clientX, y: e.clientY})
     }
 
        
@@ -228,18 +281,19 @@ const Main = ({widgets}: IProps) => {
                 }
             </div>
 
-            <div className="main">
+            <div className="main" onMouseUp={resetMouse}>
                 <div onDragOver={dragOver} onDrop={drop} className="main__content" ref={mainContent}>
                     {/* <div className="placeholder"></div> */}
                    {
                        dropElements.length ? dropElements.map((element: any, index: number) => (
-                           <div key={`${element.text}_${index}`} 
-                        //    className={isOver ? `${redOver} ${element.className}` : element.className}
-                        className={element.className}
-                           style={{top: `${element.top}px`, left: `${element.left}px`}}
-                           ref={(ref) => dropItems.current[index] = ref}
-                           onClick={resize}
-                           >{element.text}</div>
+                            <div key={`${element.text}_${index}`} 
+                                className={element.className}
+                                style={{top: `${element.top}px`, left: `${element.left}px`, width: `${element.width}px`}}
+                                ref={(ref) => dropItems.current[index] = ref}
+                                onMouseDown={resize}
+                                onMouseMove={getMouseMoveXY}
+                                
+                            >{element.text}</div>
                        )) : null
                    }
                 </div>

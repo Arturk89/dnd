@@ -21,6 +21,7 @@
     align-items: center;
     font-weight: bold;
     /* user-select: none; */
+    transition: .2s;
 }
 
 .main {
@@ -31,6 +32,7 @@
     justify-content: center;
     align-items: center;
     position: relative;
+    transition: .2s;
 }
 
 .main__content {
@@ -38,7 +40,8 @@
     width: 90%;
     height: 70vh;
     background-color: whitesmoke;
-    border: 1px solid gray
+    border: 1px solid gray;
+    transition: .2s;
 }
 
 .drop__element {
@@ -52,6 +55,7 @@
     justify-content: center;
     align-items: center;
     font-weight: bold;
+    transition: .2s;
 }
 
 .ghost__element {
@@ -60,10 +64,10 @@
     height: 150px;
     background-image: none !important;
     opacity: 1;
-    background: rgba(255, 0, 0, 1);
+    background: orange;
     -webkit-user-drag: none;
     z-index: 2;
-
+    transition: .2s;
 }
 
 .placeholder {
@@ -71,8 +75,10 @@
     width: 33.33%;
     height: 50%;
     border: 1px dashed orange;
+    transition: .2s;
 }
 
 .isOver {
     background-color: red;
+    transition: .2s;
 }
