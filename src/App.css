@@ -72,3 +72,7 @@
     height: 50%;
     border: 1px dashed orange;
 }
+
+.isOver {
+    background-color: red;
+}

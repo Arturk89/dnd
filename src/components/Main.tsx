@@ -7,6 +7,7 @@ type IProps = {
 
 const DropClass = "drop__element";
 const HeaderClass = "header__item";
+const redOver = "isOver"
 const STATIC_WIDTH = 300;
 const STATIC_HEIGHT = 150;
 
@@ -14,20 +15,24 @@ const STATIC_HEIGHT = 150;
 const Main = ({widgets}: IProps) => {
 
     const [currentDrag, setCurrentDrag] = useState<HTMLDivElement | null>(null) 
-    const [dropElements, setDropElements] = useState<HTMLDivElement[]>([])
+    const [dropElements, setDropElements] = useState<any[]>([])
     const [positionX, setPositionX] = useState<number>(500);
     const [positionY, setPositionY] = useState<number>(500);
     const [isPlaceholder, setIsPlaceholder] = useState<boolean>(false);
-    const [isOver, setIsOver] = useState<boolean>(false)
+    const [isThrottled, setIsThrottled] = useState<boolean>(false)
+    const [isOver, setIsOver] = useState<any>()
+
 
     const refWidgets = useRef<any>([])
     const mainContent = useRef<any>()
+    const dropItems = useRef<any[]>([])
 
     useEffect(() => {
         if (widgets.length) {
             refWidgets.current = refWidgets.current.slice(0, widgets.length);
         }
     }, [widgets])
+
 
 
     //update X,Y
@@ -92,20 +97,26 @@ const Main = ({widgets}: IProps) => {
     const updateDiv = (x: number, y: number) => {
         const div = document.querySelector('.test') as HTMLDivElement;
 
-        checkIsAbove()
+        if(!isThrottled) {
+            setIsThrottled(true);
+            checkIsAbove()
         if(!chekGhostDiv()) return
 
         if (div) {
             div.style.top = y + "px";
             div.style.left = x + "px";
         }
+            setTimeout(() => {
+                setIsThrottled(false)
+            }, 50)
+        }
     }
 
-    console.log(dropElements)
 
     const checkIsAbove = () => {
         const div = document.querySelector('.placeholder') as HTMLDivElement;
-        const dropped = Array.from(document.querySelectorAll('.drop__element'))
+        const dropped = Array.from(dropItems.current)
+        // const dropped = document.querySelectorAll('.drop__element')
 
         if (div && dropped?.length) {
             const getDimension = div.getBoundingClientRect();
@@ -114,34 +125,28 @@ const Main = ({widgets}: IProps) => {
             const currentWidth = Math.floor(getDimension.width);
             const currentHeight = Math.floor(getDimension.height);
 
-            // console.log(currentX)
-            // console.log(currentY)
-            // console.log(currentWidth)
-            // console.log(currentHeight)
+            let elemIsOver;
 
             for(let i = 0; i < dropped.length; i++) {
-
-       
-                const placedX = Math.floor(dropElements[i].getBoundingClientRect().x)
-                const placedY = Math.floor(dropElements[i].getBoundingClientRect().y)
-                const placedWidth = Math.floor(dropElements[i].getBoundingClientRect().width)
-                const placedHeight = Math.floor(dropElements[i].getBoundingClientRect().height)
+                const placedX = Math.floor(dropped[i].getBoundingClientRect().x)
+                const placedY = Math.floor(dropped[i].getBoundingClientRect().y)
+                const placedWidth = Math.floor(dropped[i].getBoundingClientRect().width)
+                const placedHeight = Math.floor(dropped[i].getBoundingClientRect().height)
 
                 if ((currentX < placedX + placedWidth) &&
                     (currentX + currentWidth > placedX) &&
                     (currentY < placedY + placedHeight) &&
                     (currentY + currentHeight > placedY)) {
-                        console.log('true')
-                       return setIsOver(true)
+                        elemIsOver = true;
+                       if(!dropped[i].classList.contains(redOver))
+                        dropped[i].classList.toggle(redOver)
                     } else {
-                        console.log(false)
-                       return setIsOver(false)
+                        elemIsOver = false
+                        dropped[i].classList.remove(redOver)
                     }
-                
-         
-                
             }
-
+            setIsOver(elemIsOver)
+            console.log(isOver)
         }
     }
 
@@ -178,12 +183,22 @@ const Main = ({widgets}: IProps) => {
 
         if (mainContent?.current && currentDrag) {
             currentDrag.classList.remove(HeaderClass)
-            currentDrag.classList.add(DropClass)
-            currentDrag.style.top = top + "px"
-            currentDrag.style.left = left + "px"
-            currentDrag.onmousedown=(e: any) => resize(e);
-            mainContent.current.appendChild(currentDrag)
-            setDropElements([...dropElements, currentDrag])
+            // console.log(currentDrag)
+            // currentDrag.classList.add(DropClass)
+            // currentDrag.style.top = top + "px"
+            // currentDrag.style.left = left + "px"
+            // currentDrag.onmousedown=(e: any) => resize(e);
+            // mainContent.current.appendChild(currentDrag)
+            // dropItems.current.push(currentDrag)
+            setDropElements([...dropElements, 
+                {text: currentDrag.textContent,
+                className: DropClass,
+                top: top,
+                left: left,
+                }
+                
+            ])
+            // setDropElements([...dropElements, currentDrag])
         }
 
         
@@ -191,7 +206,7 @@ const Main = ({widgets}: IProps) => {
     }
 
     const resize = (e: any) => {
-        console.log('resize', e);
+        console.log('resize', e.currentTarget);
     }
 
        
@@ -205,7 +220,7 @@ const Main = ({widgets}: IProps) => {
                         onDrag={(e: React.DragEvent<HTMLDivElement>) => setXY(e, index)} 
                         onDragStart={(e: React.DragEvent<HTMLDivElement>) => dragStart(e, index)} 
                         key={widget.id} 
-                        ref={(ref) => refWidgets.current[index] = ref}  
+                        ref={(ref) => refWidgets.current[index] = ref} 
                         className="header__item">
                             {widget.text}
                         </div>
@@ -216,7 +231,17 @@ const Main = ({widgets}: IProps) => {
             <div className="main">
                 <div onDragOver={dragOver} onDrop={drop} className="main__content" ref={mainContent}>
                     {/* <div className="placeholder"></div> */}
-                   
+                   {
+                       dropElements.length ? dropElements.map((element: any, index: number) => (
+                           <div key={`${element.text}_${index}`} 
+                        //    className={isOver ? `${redOver} ${element.className}` : element.className}
+                        className={element.className}
+                           style={{top: `${element.top}px`, left: `${element.left}px`}}
+                           ref={(ref) => dropItems.current[index] = ref}
+                           onClick={resize}
+                           >{element.text}</div>
+                       )) : null
+                   }
                 </div>
             </div>
         </>
